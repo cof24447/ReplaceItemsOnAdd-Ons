@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<!--
+/*
+Copyright 2023 Adobe. All rights reserved.
+This file is licensed to you under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License. You may obtain a copy
+of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under
+the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+OF ANY KIND, either express or implied. See the License for the specific language
+governing permissions and limitations under the License.
+*/
+-->
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="description" content="Get started with Add-on development using JavaScript" />
+        <meta name="keywords" content="Adobe, Express, Add-On, JavaScript" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+            body {
+                height: 50vh;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                font-size: 1.25em;
+                background-color: rgb(250, 250, 250);
+            }
+            img {
+                margin-bottom: 10px;
+                width: 75px;
+                height: 75px;
+            }
+            span {
+                font-size: 16px;
+                color: rgb(0, 0, 0);
+                white-space: nowrap;
+            }
+            .flexContainer {
+                display: block;
+                flex-direction: row;
+                margin-bottom: 20px;
+            }
+            .buttonText {
+                color: white;
+                font-size: 10px;
+            }
+            button {
+                height: 32px;
+                border: 1px solid transparent;
+                border-radius: 16px;
+                background-color: rgb(43, 99, 213);
+                width: 35%
+            }
+            button:disabled > span {
+                color: rgb(112, 112, 112);;
+            }
+            button:disabled {
+                background-color: rgb(63, 63, 63);
+            }
+            button:not([disabled]):hover {
+                background-color: rgb(43, 99, 180);
+            }
+            button,button {
+                margin-left: 10px;
+                margin-bottom: 10px;
+            }
+            .imgDiv{
+                display:flex;
+
+            }
+        </style>
+    </head>
+    <body>
+        <div class="flexContainer">
+            <button id="addPageButton" disabled>
+                <span class="buttonText">Add Page</span>
+            </button>
+            
+            
+            <hr/>
+            <p>Listing Images from cloud !!</p>
+        </div>
+        <p id="fileInfo"></p>
+
+        <sp-div id="image-container"></sp-div>
+        <script type="module">
+            import AddOnSdk from "https://new.express.adobe.com/static/add-on-sdk/sdk.js";
+            let imageUrls = []
+
+            function getRandomImages(count) {
+                const images = [];
+                for (let i = 0; i < count; i++) {
+                    images.push(`https://picsum.photos/id/${Math.floor(Math.random() * 1000)}/200/200`); // Adjust width & height as needed
+                }
+                return images;
+            }
+
+            // const requestOptions = {
+            // method: "GET",
+            // redirect: "follow"
+            // };
+
+            // fetch("https://testazurebulkimage.blob.core.windows.net/bulkimage/adders.jpg", requestOptions)
+            // .then((response) => response.text())
+            // .then((result) => console.log(result))
+            // .catch((error) => console.error(error));
+
+            const imageUrlspicsum = getRandomImages(50); // Get 100 random images urls
+
+            let imageContainer = document.getElementById('image-container');
+           
+
+            function random(min, max) {
+                return min + Math.floor(Math.random() * (max - min));
+            }
+
+            let data;
+            let res = await fetch('http://localhost:3000/data')
+                .then(res => {
+                
+                //console.log(res.json());
+                return res.json();
+                })
+                .then(result => {
+                    // Process the JSON data
+                    //console.log(result); // You can access the JSON data here
+                    data = result;
+                    //console.log("result",result)
+                    //console.log("data",result)
+                    //document.querySelectorAll(".book").forEach(flipBook);
+                })
+                .catch(error => {
+                console.error('Error fetching data:', error);
+                });
+
+
+            //console.log("data received",data)
+
+            AddOnSdk.ready.then(async () => {
+                console.log("AddOnSdk is ready for use.");
+                const { runtime } = AddOnSdk.instance;
+                const sandboxProxy = await runtime.apiProxy("documentSandbox");
+                //call node API
+                
+                //ends
+                for(let i = 0; i < data.length ; i++){
+                   // console.log(data)
+                //console.log("from - excel ",data[i].ImageUrl)
+                let divImage = document.createElement('div');
+                divImage.classList.add('imageDiv');
+                let innerImageDiv = document.createElement('div');
+                innerImageDiv.classList.add('image');
+
+                let img = document.createElement('img');
+                img.src = imageUrlspicsum[i]
+                img.width = 180; // Set your desired width
+                img.height = 150;
+                let addBtn = document.createElement('button');
+                addBtn.innerHTML = "<- Add !";
+                console.log(imageUrlspicsum[i])
+               //data
+               
+
+               //ends
+                let result;
+                addBtn.addEventListener('click',async function() {
+                     const width = 300;
+                    const height = 400;
+                    //console.log(data)
+                    //await sandboxProxy.addPage({ width, height });
+                    //console.log("Inside listener==>",data.Name);
+                    const Name = `${data[i].Name}`;
+                    // const Email = `Email: ${data[i].Email}`;
+                    // const Mobile = `Mobile: ${data[i].MobileNumber}`;
+                    // const Designation = `Designation: ${data[i].Designation}`;
+                    //console.log(Name)
+                    //sandboxProxy.createText(Name,140,280);
+                    // sandboxProxy.createText(Email,160,310);
+                    // sandboxProxy.createText(Mobile,140,340);
+                    // sandboxProxy.createText(Designation,140,370);
+                    const response = await fetch(`${data[i].ImageUrl}`);
+                    const blob = await response.blob();
+                    result = await sandboxProxy.createImage(blob,Name);
+                });
+                innerImageDiv.appendChild(img)
+                divImage.appendChild(innerImageDiv);
+                divImage.appendChild(addBtn)
+                imageContainer.appendChild(divImage);
+            }
+                const callSandboxApi = async (id) => {
+                    let result;
+                    try {
+                        switch (id) {
+                            case "clearArtboardButton": {
+                                result = await sandboxProxy.clearArtboard();
+                            }
+                            break;
+                            case "addPageButton": {
+                                const width = random(300, 400);
+                                const height = random(500, 600);
+                                result = await sandboxProxy.addPage({ width, height });
+                            }
+                            break;
+                            case "createShapesButton": {
+                                result = await sandboxProxy.createShapes();
+                            }
+                            break;
+                            case "createImageButton": {
+                                const width = random(200, 400);
+                                const height = random(200, 600);
+                                //console.log(width,height)
+                                const response = await fetch(`https://picsum.photos/${width}/${height}`);
+                                const blob = await response.blob();
+                                result = await sandboxProxy.createImage(blob, { width, height });
+                            }
+                            break;
+                            case "addImageButton": {
+                                const width = random(200, 400);
+                                const height = random(200, 600);
+                                const response = await fetch(`https://picsum.photos/${width}/${height}`);
+                                const blob = await response.blob();
+                                result = await sandboxProxy.createImage(blob, { width, height });
+                            }
+                            break;
+                        }
+                    } catch (exc) {
+                        console.error(exc.message, exc.stack);
+                    }
+                    //console.log(result);
+                }
+
+                const clearArtboardButton = document.getElementById("clearArtboardButton");
+                const addPageButton = document.getElementById("addPageButton");
+                const createShapesButton = document.getElementById("createShapesButton");
+                const createImageButton = document.getElementById("createImageButton");
+
+                [addPageButton].forEach(button => {
+                    button.addEventListener("click", async (e) => {
+                        await callSandboxApi(e.currentTarget.id);
+                    });
+                    button.disabled = false;
+                });
+
+                 //file input 
+
+            function createImageBlob(imageFile) {
+                const reader = new FileReader();
+                return new Promise((resolve, reject) => {
+                    reader.readAsArrayBuffer(imageFile);
+                    reader.onload = (event) => resolve(new Blob([event.target.result], { type: imageFile.type }));
+                    reader.onerror = (error) => reject(error);
+                });
+            }
+
+            const fileInput = document.getElementById("imageFileInput");
+            const processButton = document.getElementById("processButton");
+            const fileInfo = document.getElementById("fileInfo");
+            // let selectedFile;
+            // fileInput.addEventListener("change", (event) => {
+            //     selectedFile = event.target.files[0];
+            //         if (selectedFile) {
+            //             fileInfo.textContent = `Selected file: ${selectedFile.name} - ${selectedFile.type}`;
+            //             processButton.disabled = false; // Enable button if a file is selected
+            //         } else {
+            //             fileInfo.textContent = "No file selected.";
+            //             processButton.disabled = true; // Disable button if no file is selected
+            //         }
+            // // });
+            // const width = random(200, 400);
+            //     const height = random(200, 600);
+            // processButton.addEventListener("click",async () => {
+               
+            // // Add your logic to process the selected file here (e.g., display preview, upload to server)
+            // console.log("Processing selected file:", selectedFile);
+            // let data  =  await createImageBlob(selectedFile)
+            // let result = await sandboxProxy.createImage(data, { width, height });
+            // // You can use the selectedFile object to access its name, type, size, etc.
+            // });
+            //ends
+            });
+        </script>
+    </body>
+</html>
